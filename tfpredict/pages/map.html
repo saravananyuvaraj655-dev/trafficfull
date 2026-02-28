@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Traffic Route Map</title>
+  <meta charset="utf-8" />
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { height: 100vh; }
+    #panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      z-index: 1000;
+      width: 300px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="panel">
+  <input id="start" placeholder="Start location" /><br/><br/>
+  <input id="end" placeholder="End location" /><br/><br/>
+  <button onclick="findRoute()">Find Best Route</button>
+</div>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  // Initialize map
+  const map = L.map('map').setView([11.0168, 76.9558], 13); // Coimbatore
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  let routeLayers = [];
+
+  function clearRoutes() {
+    routeLayers.forEach(layer => map.removeLayer(layer));
+    routeLayers = [];
+  }
+
+  async function findRoute() {
+    clearRoutes();
+
+    const start = document.getElementById("start").value;
+    const end = document.getElementById("end").value;
+
+    const res = await fetch("http://127.0.0.1:8000/api/best-route/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start, end })
+    });
+
+    const data = await res.json();
+
+    data.routes.forEach(route => {
+      const latlngs = route.geometry.map(p => [p[1], p[0]]);
+
+      const line = L.polyline(latlngs, {
+        color: "blue",
+        weight: 4
+      }).addTo(map);
+
+      routeLayers.push(line);
+    });
+
+    // Highlight best route
+    const best = data.best_route.geometry.map(p => [p[1], p[0]]);
+    const bestLine = L.polyline(best, {
+      color: "green",
+      weight: 6
+    }).addTo(map);
+
+    routeLayers.push(bestLine);
+
+    map.fitBounds(bestLine.getBounds());
+  }
+</script>
+
+</body>
+</html>
