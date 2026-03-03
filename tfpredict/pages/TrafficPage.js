@@ -21,8 +21,7 @@ const RouteMap = dynamic(() => import("../components/RouteMap"), {
 });
 
 /* ================= ENV API ================= */
-const API_BASE =
- "http://localhost:8000"
+const API_BASE = "https://gumptionless-iconoclastically-addison.ngrok-free.dev";
 
 const TrafficPage = () => {
   /* ================= CORE STATE ================= */
